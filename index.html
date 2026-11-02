@@ -508,6 +508,38 @@
       font-weight: 500;
       color: var(--ink);
     }
+    .empty-timeline {
+      font-size: 13px;
+      color: var(--grey);
+      font-style: italic;
+      padding: 10px 0;
+    }
+    .scanner-details {
+      margin-top: 14px;
+      padding: 8px 12px;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+    }
+    .scanner-details summary {
+      font-size: 12px;
+      color: var(--grey);
+      font-weight: 500;
+      cursor: pointer;
+      user-select: none;
+    }
+    .scanner-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--ink);
+      padding: 4px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .scanner-item:last-child {
+      border-bottom: none;
+    }
     .row-actions {
       display: flex;
       flex-wrap: wrap;
@@ -622,10 +654,9 @@
 
     <div class="legend">
       <div class="legend-title">How tracking works</div>
-      <div class="legend-item"><span class="legend-strong">Detected:</span> Automated security scanner, data-center crawler, or quiet window prefetch.</div>
-      <div class="legend-item"><span class="legend-strong">Likely opened:</span> Passed scanner, data-center and timing filters (Gmail proxy, Outlook, mobile/desktop client).</div>
-      <div class="legend-item"><span class="legend-strong">Confirmed:</span> A tracked link was clicked by a verified human client.</div>
-      <div class="legend-item">Sender immunity silences self-opens via session cookie, sender IP matching, and recipient MX verification.</div>
+      <div class="legend-item"><span class="legend-strong">Opened by Recipient:</span> Verified email open by your recipient (via Gmail proxy, Outlook, Apple Mail, or desktop/mobile client).</div>
+      <div class="legend-item"><span class="legend-strong">Confirmed:</span> A tracked link was clicked by the recipient.</div>
+      <div class="legend-item"><span class="legend-strong">Self-View Immunity:</span> Sender views, sent-folder browsing, and quiet-window pre-fetches are automatically filtered and never recorded.</div>
     </div>
   </div>
 
@@ -885,10 +916,11 @@
           const confirmedHits = hits.filter(function (h) { return h.kind === 'confirmed'; });
           const likelyHits = hits.filter(function (h) { return h.kind === 'likely'; });
           const autoHits = hits.filter(function (h) { return h.kind === 'auto'; });
+          const receiverHits = hits.filter(function (h) { return h.kind === 'confirmed' || h.kind === 'likely'; });
 
           let bars = 0;
           let color = 'grey';
-          let statusText = 'Unopened';
+          let statusText = 'Not opened yet';
           let pillClass = 'pill-unopened';
 
           if (item.replied === 1) {
@@ -904,13 +936,8 @@
           } else if (likelyHits.length > 0) {
             bars = 2;
             color = 'blue';
-            statusText = 'Likely Opened';
+            statusText = 'Opened';
             pillClass = 'pill-likely';
-          } else if (autoHits.length > 0) {
-            bars = 1;
-            color = 'grey';
-            statusText = 'Scanner Detected';
-            pillClass = 'pill-auto';
           }
 
           left.appendChild(createSignalElement(bars, color));
@@ -957,10 +984,12 @@
 
           const timeSpan = document.createElement('span');
           timeSpan.className = 'status-time';
-          if (hits.length > 0) {
-            timeSpan.textContent = formatTimeAgo(hits[hits.length - 1].at);
+          if (confirmedHits.length > 0) {
+            timeSpan.textContent = 'Clicked ' + formatTimeAgo(confirmedHits[confirmedHits.length - 1].at);
+          } else if (likelyHits.length > 0) {
+            timeSpan.textContent = 'Opened ' + formatTimeAgo(likelyHits[likelyHits.length - 1].at);
           } else {
-            timeSpan.textContent = formatTimeAgo(item.created);
+            timeSpan.textContent = 'Sent ' + formatTimeAgo(item.created);
           }
           right.appendChild(timeSpan);
 
@@ -971,7 +1000,7 @@
           const details = document.createElement('div');
           details.className = 'email-details';
 
-          // 1. Engagement Metric Grid (4 cards)
+          // 1. Engagement Metric Grid (4 cards focused on recipient engagement)
           const metricGrid = document.createElement('div');
           metricGrid.className = 'metric-grid';
 
@@ -979,11 +1008,12 @@
           mHuman.className = 'metric-card';
           const mHumanVal = document.createElement('div');
           mHumanVal.className = 'metric-val';
+          if (likelyHits.length > 0) mHumanVal.style.color = 'var(--blue)';
           mHumanVal.textContent = likelyHits.length;
           mHuman.appendChild(mHumanVal);
           const mHumanLbl = document.createElement('div');
           mHumanLbl.className = 'metric-label';
-          mHumanLbl.textContent = 'Human Opens';
+          mHumanLbl.textContent = 'Receiver Opens';
           mHuman.appendChild(mHumanLbl);
           metricGrid.appendChild(mHuman);
 
@@ -991,6 +1021,7 @@
           mClick.className = 'metric-card';
           const mClickVal = document.createElement('div');
           mClickVal.className = 'metric-val';
+          if (confirmedHits.length > 0) mClickVal.style.color = 'var(--green)';
           mClickVal.textContent = confirmedHits.length;
           mClick.appendChild(mClickVal);
           const mClickLbl = document.createElement('div');
@@ -999,30 +1030,31 @@
           mClick.appendChild(mClickLbl);
           metricGrid.appendChild(mClick);
 
-          const mScan = document.createElement('div');
-          mScan.className = 'metric-card';
-          const mScanVal = document.createElement('div');
-          mScanVal.className = 'metric-val';
-          mScanVal.textContent = autoHits.length;
-          mScan.appendChild(mScanVal);
-          const mScanLbl = document.createElement('div');
-          mScanLbl.className = 'metric-label';
-          mScanLbl.textContent = 'Bot / Scans';
-          mScan.appendChild(mScanLbl);
-          metricGrid.appendChild(mScan);
-
           const mFirst = document.createElement('div');
           mFirst.className = 'metric-card';
           const mFirstVal = document.createElement('div');
           mFirstVal.className = 'metric-val';
           mFirstVal.style.fontSize = '14px';
-          mFirstVal.textContent = hits.length > 0 ? formatTimeAgo(hits[0].at) : 'None';
+          mFirstVal.textContent = receiverHits.length > 0 ? formatTimeAgo(receiverHits[0].at) : 'Not yet';
           mFirst.appendChild(mFirstVal);
           const mFirstLbl = document.createElement('div');
           mFirstLbl.className = 'metric-label';
-          mFirstLbl.textContent = 'First Seen';
+          mFirstLbl.textContent = 'First Opened';
           mFirst.appendChild(mFirstLbl);
           metricGrid.appendChild(mFirst);
+
+          const mStatus = document.createElement('div');
+          mStatus.className = 'metric-card';
+          const mStatusVal = document.createElement('div');
+          mStatusVal.className = 'metric-val';
+          mStatusVal.style.fontSize = '14px';
+          mStatusVal.textContent = statusText;
+          mStatus.appendChild(mStatusVal);
+          const mStatusLbl = document.createElement('div');
+          mStatusLbl.className = 'metric-label';
+          mStatusLbl.textContent = 'Receiver Status';
+          mStatus.appendChild(mStatusLbl);
+          metricGrid.appendChild(mStatus);
 
           details.appendChild(metricGrid);
 
@@ -1126,18 +1158,18 @@
             details.appendChild(linkCard);
           }
 
-          // 4. Hit Activity Timeline
-          if (hits.length > 0) {
-            const timelineTitle = document.createElement('div');
-            timelineTitle.className = 'info-card-title';
-            timelineTitle.style.marginTop = '14px';
-            timelineTitle.textContent = 'Detailed Hit Activity (' + hits.length + ' total)';
-            details.appendChild(timelineTitle);
+          // 4. Receiver Activity Timeline
+          const timelineTitle = document.createElement('div');
+          timelineTitle.className = 'info-card-title';
+          timelineTitle.style.marginTop = '14px';
+          timelineTitle.textContent = 'Receiver Activity (' + receiverHits.length + ' event' + (receiverHits.length === 1 ? '' : 's') + ')';
+          details.appendChild(timelineTitle);
 
+          if (receiverHits.length > 0) {
             const timeline = document.createElement('div');
             timeline.className = 'timeline';
 
-            hits.forEach(function (h) {
+            receiverHits.forEach(function (h) {
               const itemDiv = document.createElement('div');
               itemDiv.className = 'timeline-item kind-' + h.kind;
 
@@ -1145,8 +1177,8 @@
               headerDiv.className = 'timeline-header';
 
               const badge = document.createElement('span');
-              badge.className = 'badge-pill ' + (h.kind === 'confirmed' ? 'pill-confirmed' : (h.kind === 'likely' ? 'pill-likely' : 'pill-auto'));
-              badge.textContent = h.kind === 'confirmed' ? 'Confirmed Click' : (h.kind === 'likely' ? 'Likely Open' : 'Scanner / Auto');
+              badge.className = 'badge-pill ' + (h.kind === 'confirmed' ? 'pill-confirmed' : 'pill-likely');
+              badge.textContent = h.kind === 'confirmed' ? 'Link Clicked' : 'Receiver Opened';
               headerDiv.appendChild(badge);
 
               const whySpan = document.createElement('span');
@@ -1164,6 +1196,46 @@
             });
 
             details.appendChild(timeline);
+          } else {
+            const emptyTimeline = document.createElement('div');
+            emptyTimeline.className = 'empty-timeline';
+            emptyTimeline.textContent = 'No receiver views yet. The tracker will record when your recipient opens the email.';
+            details.appendChild(emptyTimeline);
+          }
+
+          // 5. Collapsed Diagnostics for Automated Scanners (if any)
+          if (autoHits.length > 0) {
+            const scannerDetails = document.createElement('details');
+            scannerDetails.className = 'scanner-details';
+
+            const summaryEl = document.createElement('summary');
+            summaryEl.textContent = 'Corporate scanner pre-fetches (' + autoHits.length + ') — filtered from opens';
+            scannerDetails.appendChild(summaryEl);
+
+            const scannerList = document.createElement('div');
+            scannerList.style.marginTop = '8px';
+            autoHits.forEach(function (h) {
+              const sItem = document.createElement('div');
+              sItem.className = 'scanner-item';
+
+              const sBadge = document.createElement('span');
+              sBadge.className = 'badge-pill pill-auto';
+              sBadge.textContent = 'Filtered';
+              sItem.appendChild(sBadge);
+
+              const sWhy = document.createElement('span');
+              sWhy.textContent = h.why;
+              sItem.appendChild(sWhy);
+
+              const sTime = document.createElement('span');
+              sTime.className = 'timeline-time';
+              sTime.textContent = '• ' + formatTimeAgo(h.at);
+              sItem.appendChild(sTime);
+
+              scannerList.appendChild(sItem);
+            });
+            scannerDetails.appendChild(scannerList);
+            details.appendChild(scannerDetails);
           }
 
           // 5. Action Buttons

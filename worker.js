@@ -179,9 +179,14 @@ async function logHit(emailId, request, env, isClick) {
     }
 
     // 3. Check if the sender recently opened the sent email in Gmail (extension self-view alert)
-    if (!isSelfView && email.last_self_view && (now - email.last_self_view < 60000)) {
+    if (!isSelfView && email.last_self_view && (now - email.last_self_view < 120000)) {
       isSelfView = true;
       selfViewReason = 'Sender viewed sent email';
+    }
+
+    // Early exit: Sender views are strictly suppressed and never recorded in D1
+    if (isSelfView) {
+      return;
     }
 
     const mxProvider = email.mx_provider || 'unknown';
@@ -197,6 +202,11 @@ async function logHit(emailId, request, env, isClick) {
       selfViewReason,
       mxProvider
     });
+
+    // Suppress any classified sender views or immediate quiet window fetches
+    if (why.includes('Sender') || why === 'Right after sending') {
+      return;
+    }
 
     const tierRow = await env.DB.prepare('SELECT COUNT(*) as c FROM hits WHERE email = ? AND kind = ?')
       .bind(emailId, kind)
@@ -462,9 +472,21 @@ export default {
       const matchSelfView = path.match(/^\/api\/emails\/([^/]+)\/self-view$/);
       if (matchSelfView && request.method === 'POST') {
         const id = matchSelfView[1];
-        await env.DB.prepare('UPDATE emails SET last_self_view = ? WHERE id = ?')
-          .bind(Date.now(), id)
-          .run();
+        const clientIp = request.headers.get('cf-connecting-ip') || '';
+        const now = Date.now();
+        const promises = [
+          env.DB.prepare('UPDATE emails SET last_self_view = ? WHERE id = ?')
+            .bind(now, id)
+            .run()
+        ];
+        if (clientIp) {
+          promises.push(
+            env.DB.prepare('INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ("last_sender_ip", ?, ?)')
+              .bind(clientIp, now)
+              .run()
+          );
+        }
+        await Promise.all(promises);
         return jsonResponse({ ok: true });
       }
 
@@ -528,6 +550,17 @@ export default {
 
         const created = Date.now();
         const follow_at = created + 3 * 24 * 60 * 60 * 1000;
+
+        // Remember sender IP when creating email from extension or dashboard
+        const clientIp = request.headers.get('cf-connecting-ip') || '';
+        if (clientIp) {
+          ctx.waitUntil(
+            env.DB.prepare('INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ("last_sender_ip", ?, ?)')
+              .bind(clientIp, created)
+              .run()
+              .catch(() => {})
+          );
+        }
 
         // Automatically detect recipient domain MX provider
         const mxProvider = await detectMxProvider(recipient);

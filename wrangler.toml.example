@@ -1,0 +1,16 @@
+name = "hush"
+main = "worker.js"
+compatibility_date = "2025-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "hush"
+database_id = "YOUR_D1_DATABASE_ID"
+
+[[rules]]
+type = "Text"
+globs = ["**/*.html"]
+fallthrough = true
+
+# [vars]
+# NOTIFY_URL = "https://ntfy.sh/your-topic"

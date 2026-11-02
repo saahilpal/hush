@@ -226,6 +226,15 @@ function injectTrackingToggle(composeEl) {
     }
   });
 
+  try {
+    chrome.storage.local.get(['workerUrl', 'apiToken'], (res) => {
+      if (!res || !res.workerUrl || !res.apiToken) {
+        label.title = 'Hush: Not configured! Open extension options to set Worker URL & API Token';
+        label.style.color = '#d97706';
+      }
+    });
+  } catch {}
+
   container.appendChild(checkbox);
   container.appendChild(label);
 

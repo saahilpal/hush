@@ -20,6 +20,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       .catch(() => sendResponse({ ok: false }));
     return true;
   }
+
+  if (message.action === 'TEST_CONNECTION') {
+    handleTestConnection(message)
+      .then((res) => sendResponse(res))
+      .catch((err) => sendResponse({ error: err.message }));
+    return true;
+  }
 });
 
 async function handleCreateTracker({ to, subject, link }) {
@@ -71,4 +78,28 @@ async function handleSelfView(id) {
   }).catch(() => {});
 
   return { ok: true };
+}
+
+async function handleTestConnection({ workerUrl, apiToken }) {
+  const url = (workerUrl || '').replace(/\/+$/, '');
+  if (!url || !apiToken) {
+    throw new Error('Worker URL and API token are required.');
+  }
+
+  const res = await fetch(`${url}/api/ping`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${apiToken}`
+    }
+  });
+
+  if (!res.ok) {
+    if (res.status === 401) {
+      throw new Error('401 Unauthorized: API Token is incorrect.');
+    }
+    const text = await res.text();
+    throw new Error(`HTTP ${res.status}: ${text || res.statusText}`);
+  }
+
+  return await res.json();
 }

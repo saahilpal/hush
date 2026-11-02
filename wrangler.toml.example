@@ -14,3 +14,4 @@ fallthrough = true
 
 # [vars]
 # NOTIFY_URL = "https://ntfy.sh/your-topic"
+

@@ -12,6 +12,16 @@
       --blue: #3d4fd6;
       --green: #0f9d75;
     }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --ink: #e2e5ec;
+        --bg: #0f121d;
+        --panel: #171b29;
+        --line: #262c3f;
+        --blue: #5b6df5;
+        --green: #10b981;
+      }
+    }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -28,11 +38,19 @@
       width: 100%;
       padding: 6px 8px;
       border: 1px solid var(--line);
+      background: var(--bg);
+      color: var(--ink);
       border-radius: 4px;
       font-size: 13px;
       outline: none;
     }
     input:focus { border-color: var(--blue); }
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 14px;
+    }
     button {
       width: 100%;
       padding: 7px 12px;
@@ -44,13 +62,20 @@
       font-weight: 500;
       font-size: 13px;
     }
+    button.btn-secondary {
+      background: var(--bg);
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+    button:hover { opacity: 0.92; }
     .status {
-      margin-top: 10px;
+      margin-top: 12px;
       font-size: 12px;
       min-height: 18px;
+      line-height: 1.4;
     }
-    .status.success { color: var(--green); }
-    .status.error { color: #d32f2f; }
+    .status.success { color: var(--green); font-weight: 500; }
+    .status.error { color: #d32f2f; font-weight: 500; }
   </style>
 </head>
 <body>
@@ -63,9 +88,11 @@
     <label for="api-token">API Token</label>
     <input type="password" id="api-token" placeholder="Bearer API_TOKEN">
   </div>
-  <button id="btn-save">Save & grant permission</button>
+  <div class="btn-group">
+    <button id="btn-save">Save & grant permission</button>
+    <button id="btn-test" class="btn-secondary">Test Connection</button>
+  </div>
   <div class="status" id="status"></div>
   <script src="options.js"></script>
 </body>
 </html>
-

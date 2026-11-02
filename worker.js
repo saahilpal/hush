@@ -16,6 +16,23 @@ const GIF_HEADERS = {
   'Expires': '0'
 };
 
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Max-Age': '86400'
+};
+
+function jsonResponse(data, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      'Content-Type': 'application/json',
+      ...CORS_HEADERS
+    }
+  });
+}
+
 function timingSafeEqual(a, b) {
   if (typeof a !== 'string' || typeof b !== 'string') return false;
   const enc = new TextEncoder();
@@ -64,9 +81,9 @@ async function isSessionValid(request, env) {
   return timingSafeEqual(cookie, expected);
 }
 
-async function isAuthorized(request, env, isCreateOrSelfView = false) {
+async function isAuthorized(request, env, isCreateOrSelfViewOrPing = false) {
   if (await isSessionValid(request, env)) return true;
-  if (isCreateOrSelfView && env.API_TOKEN) {
+  if (isCreateOrSelfViewOrPing && env.API_TOKEN) {
     const auth = request.headers.get('Authorization') || '';
     if (auth.startsWith('Bearer ')) {
       const token = auth.slice(7).trim();
@@ -77,9 +94,9 @@ async function isAuthorized(request, env, isCreateOrSelfView = false) {
 }
 
 async function detectMxProvider(recipientEmail) {
-  const domainMatch = recipientEmail.match(/@([^@\s>]+)/);
+  const domainMatch = recipientEmail.match(/@([^@\s>,;]+)/);
   if (!domainMatch) return 'unknown';
-  const domain = domainMatch[1].toLowerCase();
+  const domain = domainMatch[1].toLowerCase().replace(/\.+$/, '');
 
   if (domain === 'gmail.com' || domain === 'googlemail.com') {
     return 'google';
@@ -93,7 +110,8 @@ async function detectMxProvider(recipientEmail) {
 
   try {
     const dohRes = await fetch(`https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(domain)}&type=MX`, {
-      headers: { 'accept': 'application/dns-json' }
+      headers: { 'accept': 'application/dns-json' },
+      signal: AbortSignal.timeout(2500)
     });
     if (dohRes.ok) {
       const dohData = await dohRes.json();
@@ -109,6 +127,9 @@ async function detectMxProvider(recipientEmail) {
       }
       if (/mimecast/i.test(answers)) {
         return 'Mimecast';
+      }
+      if (/barracuda/i.test(answers)) {
+        return 'Barracuda';
       }
       if (answers) {
         return 'Corporate Mail';
@@ -412,12 +433,14 @@ export default {
 
     // 5. API routes: /api/*
     if (path.startsWith('/api/')) {
-      const isCreateOrSelfView =
-        (request.method === 'POST' && path === '/api/emails') ||
-        (request.method === 'POST' && path.includes('/self-view'));
-      const authorized = await isAuthorized(request, env, isCreateOrSelfView);
+      // 5.0 Handle CORS preflight
+      if (request.method === 'OPTIONS') {
+        return new Response(null, { status: 204, headers: CORS_HEADERS });
+      }
+
+      const authorized = await isAuthorized(request, env, true);
       if (!authorized) {
-        return Response.json({ error: 'Unauthorized' }, { status: 401 });
+        return jsonResponse({ error: 'Unauthorized' }, 401);
       }
 
       // Record sender IP on any authenticated API call
@@ -430,17 +453,22 @@ export default {
         );
       }
 
-      // Self-view registration: POST /api/emails/<id>/self-view
+      // 5.1 Health / Connection Test: GET /api/ping
+      if (path === '/api/ping' && request.method === 'GET') {
+        return jsonResponse({ ok: true, version: '1.2.0', status: 'healthy' });
+      }
+
+      // 5.2 Self-view registration: POST /api/emails/<id>/self-view
       const matchSelfView = path.match(/^\/api\/emails\/([^/]+)\/self-view$/);
       if (matchSelfView && request.method === 'POST') {
         const id = matchSelfView[1];
         await env.DB.prepare('UPDATE emails SET last_self_view = ? WHERE id = ?')
           .bind(Date.now(), id)
           .run();
-        return Response.json({ ok: true });
+        return jsonResponse({ ok: true });
       }
 
-      // GET /api/emails: latest 100 emails with hits
+      // 5.3 GET /api/emails: latest 100 emails with hits
       if (path === '/api/emails' && request.method === 'GET') {
         const [emailsRes, hitsRes] = await env.DB.batch([
           env.DB.prepare('SELECT * FROM emails ORDER BY created DESC LIMIT 100'),
@@ -461,21 +489,21 @@ export default {
           ...e,
           hits: hitsMap[e.id] || []
         }));
-        return Response.json(data);
+        return jsonResponse(data);
       }
 
-      // POST /api/emails: create new email tracker
+      // 5.4 POST /api/emails: create new email tracker
       if (path === '/api/emails' && request.method === 'POST') {
         let body;
         try {
           body = await request.json();
         } catch {
-          return Response.json({ error: 'Invalid JSON' }, { status: 400 });
+          return jsonResponse({ error: 'Invalid JSON' }, 400);
         }
 
         const to = (body.to || '').trim();
         if (!to) {
-          return Response.json({ error: '"to" is required' }, { status: 400 });
+          return jsonResponse({ error: '"to" is required' }, 400);
         }
         const recipient = to.slice(0, 120);
         const subject = (body.subject || '').trim();
@@ -488,7 +516,7 @@ export default {
           try {
             new URL(link);
           } catch {
-            return Response.json({ error: 'Invalid URL for link' }, { status: 400 });
+            return jsonResponse({ error: 'Invalid URL for link' }, 400);
           }
         }
 
@@ -510,10 +538,10 @@ export default {
           .bind(id, recipient, subject, link, created, follow_at, mxProvider)
           .run();
 
-        return Response.json({ id, mxProvider });
+        return jsonResponse({ id, mxProvider });
       }
 
-      // Email action routes: /api/emails/<id>/...
+      // 5.5 Email action routes: /api/emails/<id>/...
       const matchReplied = path.match(/^\/api\/emails\/([^/]+)\/replied$/);
       if (matchReplied && request.method === 'POST') {
         const id = matchReplied[1];
@@ -522,7 +550,7 @@ export default {
         )
           .bind(id)
           .run();
-        return Response.json({ ok: true });
+        return jsonResponse({ ok: true });
       }
 
       const matchFollowup = path.match(/^\/api\/emails\/([^/]+)\/followup$/);
@@ -534,7 +562,7 @@ export default {
         )
           .bind(newFollowAt, id)
           .run();
-        return Response.json({ ok: true });
+        return jsonResponse({ ok: true });
       }
 
       const matchDelete = path.match(/^\/api\/emails\/([^/]+)(?:\/delete)?$/);
@@ -544,10 +572,10 @@ export default {
           env.DB.prepare('DELETE FROM emails WHERE id = ?').bind(id),
           env.DB.prepare('DELETE FROM hits WHERE email = ?').bind(id)
         ]);
-        return Response.json({ ok: true });
+        return jsonResponse({ ok: true });
       }
 
-      return Response.json({ error: 'Not found' }, { status: 404 });
+      return jsonResponse({ error: 'Not found' }, 404);
     }
 
     // 6. Dashboard: GET /

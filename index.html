@@ -12,9 +12,11 @@
       --line: #e6e8ed;
       --blue: #3d4fd6;
       --green: #0f9d75;
-      --grey: #9aa1b2;
+      --grey: #8c94a6;
       --amber: #b7791f;
+      --purple: #7e22ce;
       --dim-bar: #e6e8ed;
+      --card-bg: #fbfcfd;
     }
     @media (prefers-color-scheme: dark) {
       :root {
@@ -25,8 +27,10 @@
         --blue: #5b6df5;
         --green: #10b981;
         --grey: #8c94a6;
-        --amber: #d97706;
+        --amber: #f59e0b;
+        --purple: #a855f7;
         --dim-bar: #262c3f;
+        --card-bg: #131722;
       }
     }
     * {
@@ -46,6 +50,9 @@
       color: var(--blue);
       text-decoration: none;
     }
+    a:hover {
+      text-decoration: underline;
+    }
     button, input {
       font-family: inherit;
       font-size: 14px;
@@ -55,7 +62,7 @@
       outline-offset: 1px;
     }
     .container {
-      max-width: 700px;
+      max-width: 740px;
       margin: 0 auto;
       text-align: left;
     }
@@ -63,12 +70,17 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
     h1 {
       font-size: 20px;
       font-weight: 600;
       letter-spacing: -0.2px;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
     .btn {
       display: inline-flex;
@@ -82,25 +94,42 @@
       cursor: pointer;
       font-weight: 500;
       line-height: 1.4;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+    .btn:hover {
+      background: var(--bg);
     }
     .btn-primary {
       background: var(--blue);
       color: #ffffff;
       border-color: var(--blue);
     }
+    .btn-primary:hover {
+      opacity: 0.92;
+    }
     .btn-sm {
       padding: 4px 8px;
       font-size: 12px;
     }
     .btn-danger {
-      color: #d32f2f;
+      color: #ef4444;
+    }
+    .btn-danger:hover {
+      background: #fef2f2;
+      border-color: #fecaca;
+    }
+    @media (prefers-color-scheme: dark) {
+      .btn-danger:hover {
+        background: #450a0a;
+        border-color: #7f1d1d;
+      }
     }
     .composer {
       background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 6px;
       padding: 16px;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
       display: none;
     }
     .composer.open {
@@ -158,11 +187,20 @@
       flex-wrap: wrap;
       gap: 8px;
     }
+    .toolbar-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
     .tabs {
       display: flex;
       border-bottom: 1px solid var(--line);
       margin-bottom: 16px;
       gap: 16px;
+      overflow-x: auto;
     }
     .tab-btn {
       background: none;
@@ -174,10 +212,27 @@
       font-weight: 500;
       font-size: 14px;
       margin-bottom: -1px;
+      white-space: nowrap;
     }
     .tab-btn.active {
       color: var(--ink);
       border-bottom-color: var(--blue);
+    }
+    .search-box {
+      width: 100%;
+      margin-bottom: 16px;
+    }
+    .search-box input {
+      width: 100%;
+      padding: 8px 12px;
+      font-size: 13px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      border-radius: 6px;
+    }
+    .search-box input:focus {
+      border-color: var(--blue);
     }
     .panel {
       background: var(--panel);
@@ -188,9 +243,18 @@
     .email-row {
       border-bottom: 1px solid var(--line);
       cursor: pointer;
+      transition: background 0.1s ease;
     }
     .email-row:last-child {
       border-bottom: none;
+    }
+    .email-row:hover {
+      background: rgba(0, 0, 0, 0.015);
+    }
+    @media (prefers-color-scheme: dark) {
+      .email-row:hover {
+        background: rgba(255, 255, 255, 0.02);
+      }
     }
     .email-summary {
       padding: 12px 16px;
@@ -233,12 +297,24 @@
     }
     .email-recipient {
       font-size: 14px;
-      font-weight: 500;
+      font-weight: 600;
     }
     .email-subject {
       font-size: 13px;
       color: var(--grey);
       margin-left: 6px;
+    }
+    .mx-chip {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 500;
+      padding: 1px 5px;
+      border-radius: 3px;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      color: var(--grey);
+      margin-left: 6px;
+      vertical-align: middle;
     }
     .email-right {
       display: flex;
@@ -248,19 +324,55 @@
       font-size: 13px;
       text-align: right;
     }
-    .status-text {
-      font-weight: 500;
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 7px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1.2;
+    }
+    .pill-confirmed {
+      background: #e6f6f1;
+      color: #0f9d75;
+    }
+    .pill-likely {
+      background: #e8ecfb;
+      color: #3d4fd6;
+    }
+    .pill-auto {
+      background: #fef3c7;
+      color: #b45309;
+    }
+    .pill-replied {
+      background: #f3e8ff;
+      color: #7e22ce;
+    }
+    .pill-unopened {
+      background: var(--line);
+      color: var(--grey);
+    }
+    @media (prefers-color-scheme: dark) {
+      .pill-confirmed { background: #064e3b; color: #34d399; }
+      .pill-likely { background: #1e1b4b; color: #818cf8; }
+      .pill-auto { background: #451a03; color: #fbbf24; }
+      .pill-replied { background: #3b0764; color: #c084fc; }
+      .pill-unopened { background: #262c3f; color: #94a3b8; }
     }
     .status-time {
       color: var(--grey);
+      font-size: 12px;
     }
     .followup-alert {
       color: var(--amber);
-      font-weight: 500;
+      font-weight: 600;
+      font-size: 11px;
     }
     .email-details {
       display: none;
-      padding: 12px 16px 16px 42px;
+      padding: 16px;
       background: var(--bg);
       border-top: 1px solid var(--line);
       font-size: 13px;
@@ -268,69 +380,144 @@
     .email-row.expanded .email-details {
       display: block;
     }
-    .detail-section {
-      margin-bottom: 8px;
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 14px;
     }
-    .detail-label {
+    @media (max-width: 560px) {
+      .metric-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    .metric-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 10px;
+      text-align: center;
+    }
+    .metric-val {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+    .metric-label {
+      font-size: 11px;
       color: var(--grey);
-      margin-right: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-top: 2px;
+    }
+    .info-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .info-card-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--grey);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 6px;
+    }
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0;
+      font-size: 13px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+    }
+    .info-row:last-child {
+      border-bottom: none;
+    }
+    @media (prefers-color-scheme: dark) {
+      .info-row {
+        border-bottom-color: rgba(255, 255, 255, 0.04);
+      }
+    }
+    .info-name {
+      color: var(--grey);
+    }
+    .info-val {
+      font-weight: 500;
+      color: var(--ink);
+    }
+    .link-box {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 6px 10px;
+      margin-top: 6px;
+      font-size: 12px;
+    }
+    .link-url {
+      font-family: monospace;
+      color: var(--blue);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     .timeline {
-      margin: 12px 0;
+      margin: 14px 0;
       border-left: 2px solid var(--line);
-      padding-left: 12px;
+      padding-left: 14px;
     }
     .timeline-item {
-      margin-bottom: 8px;
+      margin-bottom: 12px;
       font-size: 12px;
+      position: relative;
     }
     .timeline-item:last-child {
       margin-bottom: 0;
     }
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -19px;
+      top: 4px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--grey);
+      border: 2px solid var(--bg);
+    }
+    .timeline-item.kind-confirmed::before { background: var(--green); }
+    .timeline-item.kind-likely::before { background: var(--blue); }
+    .timeline-item.kind-auto::before { background: var(--amber); }
+    .timeline-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 2px;
+    }
     .timeline-time {
       color: var(--grey);
-      margin-right: 8px;
-    }
-    .timeline-badge {
-      display: inline-block;
-      padding: 1px 6px;
-      border-radius: 3px;
       font-size: 11px;
+    }
+    .timeline-why {
       font-weight: 500;
-      margin-left: 6px;
-    }
-    .badge-auto {
-      background: var(--line);
-      color: var(--grey);
-    }
-    .badge-likely {
-      background: #e8ecfb;
-      color: var(--blue);
-    }
-    @media (prefers-color-scheme: dark) {
-      .badge-likely {
-        background: #1c2545;
-        color: #8fa0f9;
-      }
-    }
-    .badge-confirmed {
-      background: #e6f6f1;
-      color: var(--green);
-    }
-    @media (prefers-color-scheme: dark) {
-      .badge-confirmed {
-        background: #123329;
-        color: #34d399;
-      }
+      color: var(--ink);
     }
     .row-actions {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      margin-top: 12px;
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
     }
     .empty-state {
-      padding: 36px 16px;
+      padding: 40px 16px;
       text-align: center;
       color: var(--grey);
       font-size: 14px;
@@ -369,6 +556,7 @@
       pointer-events: none;
       opacity: 0;
       transition: opacity 0.2s ease;
+      z-index: 1000;
     }
     .toast.show {
       opacity: 1;
@@ -379,7 +567,10 @@
   <div class="container">
     <header>
       <h1>Hush</h1>
-      <button class="btn btn-primary" id="btn-toggle-composer">New email</button>
+      <div class="header-actions">
+        <button class="btn btn-sm" id="btn-refresh" title="Refresh dashboard data">↻ Refresh</button>
+        <button class="btn btn-primary" id="btn-toggle-composer">New email</button>
+      </div>
     </header>
 
     <div class="composer" id="composer">
@@ -387,7 +578,7 @@
       <form id="composer-form">
         <div class="form-group">
           <label for="recipient-input">Recipient (required, max 120 chars)</label>
-          <input type="text" id="recipient-input" required maxlength="120" placeholder="jane@example.com">
+          <input type="text" id="recipient-input" required maxlength="120" placeholder="jane@company.com">
         </div>
         <div class="form-group">
           <label for="subject-input">Subject (optional)</label>
@@ -413,6 +604,10 @@
       </div>
     </div>
 
+    <div class="search-box">
+      <input type="text" id="search-input" placeholder="🔍 Search by recipient, subject, or provider...">
+    </div>
+
     <div class="tabs" id="tabs">
       <button class="tab-btn active" data-tab="all" id="tab-all">All (0)</button>
       <button class="tab-btn" data-tab="followup" id="tab-followup">Follow up (0)</button>
@@ -427,10 +622,10 @@
 
     <div class="legend">
       <div class="legend-title">How tracking works</div>
-      <div class="legend-item"><span class="legend-strong">Detected:</span> Something requested the pixel, maybe a scanner, an Apple Mail prefetch or me.</div>
-      <div class="legend-item"><span class="legend-strong">Likely opened:</span> The request passed scanner, data-center and timing filters.</div>
-      <div class="legend-item"><span class="legend-strong">Confirmed:</span> A tracked link was clicked from a client that passed the same filters.</div>
-      <div class="legend-item">A pixel alone can never prove a person read an email.</div>
+      <div class="legend-item"><span class="legend-strong">Detected:</span> Automated security scanner, data-center crawler, or quiet window prefetch.</div>
+      <div class="legend-item"><span class="legend-strong">Likely opened:</span> Passed scanner, data-center and timing filters (Gmail proxy, Outlook, mobile/desktop client).</div>
+      <div class="legend-item"><span class="legend-strong">Confirmed:</span> A tracked link was clicked by a verified human client.</div>
+      <div class="legend-item">Sender immunity silences self-opens via session cookie, sender IP matching, and recipient MX verification.</div>
     </div>
   </div>
 
@@ -440,6 +635,7 @@
     (function () {
       let emailsData = [];
       let currentTab = 'all';
+      let searchQuery = '';
       let latestCreatedTracker = null;
       let refreshInterval = null;
 
@@ -447,6 +643,8 @@
       const composerForm = document.getElementById('composer-form');
       const btnToggleComposer = document.getElementById('btn-toggle-composer');
       const btnCancelComposer = document.getElementById('btn-cancel-composer');
+      const btnRefresh = document.getElementById('btn-refresh');
+      const searchInput = document.getElementById('search-input');
       const readyBanner = document.getElementById('ready-banner');
       const btnCopyPixel = document.getElementById('btn-copy-pixel');
       const btnCopyLink = document.getElementById('btn-copy-link');
@@ -463,7 +661,7 @@
         toast.classList.add('show');
         setTimeout(function () {
           toast.classList.remove('show');
-        }, 2000);
+        }, 2200);
       }
 
       function formatTimeAgo(ms) {
@@ -478,8 +676,9 @@
       }
 
       function formatFullDate(ms) {
+        if (!ms) return '—';
         const d = new Date(ms);
-        return d.toLocaleDateString() + ' ' + d.toLocaleTimeString();
+        return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       }
 
       function copyPixel(id) {
@@ -540,6 +739,19 @@
         if (latestCreatedTracker && latestCreatedTracker.id) {
           copyTrackedLink(latestCreatedTracker.id);
         }
+      });
+
+      btnRefresh.addEventListener('click', function () {
+        btnRefresh.textContent = '↻ Updating...';
+        loadEmails(function () {
+          btnRefresh.textContent = '↻ Refresh';
+          showToast('Dashboard refreshed');
+        });
+      });
+
+      searchInput.addEventListener('input', function (e) {
+        searchQuery = (e.target.value || '').trim().toLowerCase();
+        renderList();
       });
 
       composerForm.addEventListener('submit', function (e) {
@@ -605,18 +817,12 @@
         let countReplied = 0;
 
         emailsData.forEach(function (item) {
-          if (item.replied === 1) {
-            countReplied++;
-          }
-          if (item.follow_at <= now && item.replied === 0) {
-            countFollowup++;
-          }
+          if (item.replied === 1) countReplied++;
+          if (item.follow_at <= now && item.replied === 0) countFollowup++;
           const hasOpen = (item.hits || []).some(function (h) {
             return h.kind === 'likely' || h.kind === 'confirmed';
           });
-          if (hasOpen) {
-            countOpened++;
-          }
+          if (hasOpen) countOpened++;
         });
 
         document.getElementById('tab-all').textContent = 'All (' + countAll + ')';
@@ -625,20 +831,33 @@
         document.getElementById('tab-replied').textContent = 'Replied (' + countReplied + ')';
 
         const filtered = emailsData.filter(function (item) {
-          if (currentTab === 'all') return true;
-          if (currentTab === 'followup') return item.follow_at <= now && item.replied === 0;
-          if (currentTab === 'opened') {
-            return (item.hits || []).some(function (h) {
+          // Tab match
+          let matchTab = true;
+          if (currentTab === 'followup') matchTab = (item.follow_at <= now && item.replied === 0);
+          else if (currentTab === 'opened') {
+            matchTab = (item.hits || []).some(function (h) {
               return h.kind === 'likely' || h.kind === 'confirmed';
             });
+          } else if (currentTab === 'replied') {
+            matchTab = (item.replied === 1);
           }
-          if (currentTab === 'replied') return item.replied === 1;
+          if (!matchTab) return false;
+
+          // Search match
+          if (searchQuery) {
+            const recipientStr = (item.recipient || '').toLowerCase();
+            const subjectStr = (item.subject || '').toLowerCase();
+            const providerStr = (item.mx_provider || '').toLowerCase();
+            return recipientStr.includes(searchQuery) || subjectStr.includes(searchQuery) || providerStr.includes(searchQuery);
+          }
           return true;
         });
 
         if (filtered.length === 0) {
           emptyState.style.display = 'block';
-          if (currentTab === 'all') {
+          if (searchQuery) {
+            emptyState.textContent = 'No emails matching "' + searchQuery + '".';
+          } else if (currentTab === 'all') {
             emptyState.textContent = 'No emails tracked yet. Click "New email" to create one.';
           } else if (currentTab === 'followup') {
             emptyState.textContent = 'No follow-ups due right now.';
@@ -663,21 +882,35 @@
           left.className = 'email-left';
 
           const hits = item.hits || [];
-          const hasConfirmed = hits.some(function (h) { return h.kind === 'confirmed'; });
-          const hasLikely = hits.some(function (h) { return h.kind === 'likely'; });
-          const hasAuto = hits.some(function (h) { return h.kind === 'auto'; });
+          const confirmedHits = hits.filter(function (h) { return h.kind === 'confirmed'; });
+          const likelyHits = hits.filter(function (h) { return h.kind === 'likely'; });
+          const autoHits = hits.filter(function (h) { return h.kind === 'auto'; });
 
           let bars = 0;
           let color = 'grey';
-          if (item.replied === 1 || hasConfirmed) {
+          let statusText = 'Unopened';
+          let pillClass = 'pill-unopened';
+
+          if (item.replied === 1) {
             bars = 3;
             color = 'green';
-          } else if (hasLikely) {
+            statusText = 'Replied';
+            pillClass = 'pill-replied';
+          } else if (confirmedHits.length > 0) {
+            bars = 3;
+            color = 'green';
+            statusText = 'Confirmed Click';
+            pillClass = 'pill-confirmed';
+          } else if (likelyHits.length > 0) {
             bars = 2;
             color = 'blue';
-          } else if (hasAuto) {
+            statusText = 'Likely Opened';
+            pillClass = 'pill-likely';
+          } else if (autoHits.length > 0) {
             bars = 1;
             color = 'grey';
+            statusText = 'Scanner Detected';
+            pillClass = 'pill-auto';
           }
 
           left.appendChild(createSignalElement(bars, color));
@@ -689,6 +922,13 @@
           recipientSpan.className = 'email-recipient';
           recipientSpan.textContent = item.recipient;
           textWrapper.appendChild(recipientSpan);
+
+          if (item.mx_provider && item.mx_provider !== 'unknown') {
+            const mxSpan = document.createElement('span');
+            mxSpan.className = 'mx-chip';
+            mxSpan.textContent = item.mx_provider;
+            textWrapper.appendChild(mxSpan);
+          }
 
           if (item.subject) {
             const subjectSpan = document.createElement('span');
@@ -706,100 +946,227 @@
           if (isDue) {
             const alertSpan = document.createElement('span');
             alertSpan.className = 'followup-alert';
-            alertSpan.textContent = 'Time to follow up';
+            alertSpan.textContent = '⚡ Follow-up due';
             right.appendChild(alertSpan);
-          } else {
-            const statusWordSpan = document.createElement('span');
-            statusWordSpan.className = 'status-text';
-
-            const statusTimeSpan = document.createElement('span');
-            statusTimeSpan.className = 'status-time';
-
-            if (item.replied === 1) {
-              statusWordSpan.textContent = 'Replied';
-              statusTimeSpan.textContent = ' ' + formatTimeAgo(item.created);
-            } else if (hits.length > 0) {
-              const lastHit = hits[hits.length - 1];
-              statusWordSpan.textContent = lastHit.kind === 'confirmed' ? 'Confirmed' : (lastHit.kind === 'likely' ? 'Likely opened' : 'Detected');
-              statusTimeSpan.textContent = ' ' + formatTimeAgo(lastHit.at);
-            } else {
-              statusWordSpan.textContent = 'Sent ' + formatTimeAgo(item.created);
-            }
-            right.appendChild(statusWordSpan);
-            right.appendChild(statusTimeSpan);
           }
+
+          const pillSpan = document.createElement('span');
+          pillSpan.className = 'badge-pill ' + pillClass;
+          pillSpan.textContent = statusText;
+          right.appendChild(pillSpan);
+
+          const timeSpan = document.createElement('span');
+          timeSpan.className = 'status-time';
+          if (hits.length > 0) {
+            timeSpan.textContent = formatTimeAgo(hits[hits.length - 1].at);
+          } else {
+            timeSpan.textContent = formatTimeAgo(item.created);
+          }
+          right.appendChild(timeSpan);
+
           summary.appendChild(right);
           row.appendChild(summary);
 
-          // Details panel
+          // Expanded Details Section
           const details = document.createElement('div');
           details.className = 'email-details';
 
-          const sentSection = document.createElement('div');
-          sentSection.className = 'detail-section';
-          const sentLabel = document.createElement('span');
-          sentLabel.className = 'detail-label';
-          sentLabel.textContent = 'Sent:';
-          sentSection.appendChild(sentLabel);
-          const sentVal = document.createElement('span');
-          sentVal.textContent = formatFullDate(item.created);
-          sentSection.appendChild(sentVal);
-          details.appendChild(sentSection);
+          // 1. Engagement Metric Grid (4 cards)
+          const metricGrid = document.createElement('div');
+          metricGrid.className = 'metric-grid';
 
-          const countSection = document.createElement('div');
-          countSection.className = 'detail-section';
-          if (hits.length > 0) {
-            const firstHitTimeDiff = formatTimeAgo(item.created + (hits[0].at - item.created));
-            countSection.textContent = 'First detected ' + formatTimeAgo(hits[0].at) + ', ' + hits.length + ' request' + (hits.length === 1 ? '' : 's') + ' in total';
-          } else {
-            countSection.textContent = 'No requests detected yet';
-          }
-          details.appendChild(countSection);
+          const mHuman = document.createElement('div');
+          mHuman.className = 'metric-card';
+          const mHumanVal = document.createElement('div');
+          mHumanVal.className = 'metric-val';
+          mHumanVal.textContent = likelyHits.length;
+          mHuman.appendChild(mHumanVal);
+          const mHumanLbl = document.createElement('div');
+          mHumanLbl.className = 'metric-label';
+          mHumanLbl.textContent = 'Human Opens';
+          mHuman.appendChild(mHumanLbl);
+          metricGrid.appendChild(mHuman);
 
-          const followSection = document.createElement('div');
-          followSection.className = 'detail-section';
-          const followLabel = document.createElement('span');
-          followLabel.className = 'detail-label';
-          followLabel.textContent = 'Follow-up:';
-          followSection.appendChild(followLabel);
-          const followVal = document.createElement('span');
+          const mClick = document.createElement('div');
+          mClick.className = 'metric-card';
+          const mClickVal = document.createElement('div');
+          mClickVal.className = 'metric-val';
+          mClickVal.textContent = confirmedHits.length;
+          mClick.appendChild(mClickVal);
+          const mClickLbl = document.createElement('div');
+          mClickLbl.className = 'metric-label';
+          mClickLbl.textContent = 'Link Clicks';
+          mClick.appendChild(mClickLbl);
+          metricGrid.appendChild(mClick);
+
+          const mScan = document.createElement('div');
+          mScan.className = 'metric-card';
+          const mScanVal = document.createElement('div');
+          mScanVal.className = 'metric-val';
+          mScanVal.textContent = autoHits.length;
+          mScan.appendChild(mScanVal);
+          const mScanLbl = document.createElement('div');
+          mScanLbl.className = 'metric-label';
+          mScanLbl.textContent = 'Bot / Scans';
+          mScan.appendChild(mScanLbl);
+          metricGrid.appendChild(mScan);
+
+          const mFirst = document.createElement('div');
+          mFirst.className = 'metric-card';
+          const mFirstVal = document.createElement('div');
+          mFirstVal.className = 'metric-val';
+          mFirstVal.style.fontSize = '14px';
+          mFirstVal.textContent = hits.length > 0 ? formatTimeAgo(hits[0].at) : 'None';
+          mFirst.appendChild(mFirstVal);
+          const mFirstLbl = document.createElement('div');
+          mFirstLbl.className = 'metric-label';
+          mFirstLbl.textContent = 'First Seen';
+          mFirst.appendChild(mFirstLbl);
+          metricGrid.appendChild(mFirst);
+
+          details.appendChild(metricGrid);
+
+          // 2. Email Info Card
+          const infoCard = document.createElement('div');
+          infoCard.className = 'info-card';
+
+          const infoCardTitle = document.createElement('div');
+          infoCardTitle.className = 'info-card-title';
+          infoCardTitle.textContent = 'Delivery & Infrastructure Details';
+          infoCard.appendChild(infoCardTitle);
+
+          const rowRecipient = document.createElement('div');
+          rowRecipient.className = 'info-row';
+          const lblRecipient = document.createElement('span');
+          lblRecipient.className = 'info-name';
+          lblRecipient.textContent = 'Recipient';
+          rowRecipient.appendChild(lblRecipient);
+          const valRecipient = document.createElement('span');
+          valRecipient.className = 'info-val';
+          valRecipient.textContent = item.recipient;
+          rowRecipient.appendChild(valRecipient);
+          infoCard.appendChild(rowRecipient);
+
+          const rowProvider = document.createElement('div');
+          rowProvider.className = 'info-row';
+          const lblProvider = document.createElement('span');
+          lblProvider.className = 'info-name';
+          lblProvider.textContent = 'Mail Provider (MX)';
+          rowProvider.appendChild(lblProvider);
+          const valProvider = document.createElement('span');
+          valProvider.className = 'info-val';
+          valProvider.textContent = item.mx_provider || 'Not detected';
+          rowProvider.appendChild(valProvider);
+          infoCard.appendChild(rowProvider);
+
+          const rowSent = document.createElement('div');
+          rowSent.className = 'info-row';
+          const lblSent = document.createElement('span');
+          lblSent.className = 'info-name';
+          lblSent.textContent = 'Sent Time';
+          rowSent.appendChild(lblSent);
+          const valSent = document.createElement('span');
+          valSent.className = 'info-val';
+          valSent.textContent = formatFullDate(item.created) + ' (' + formatTimeAgo(item.created) + ')';
+          rowSent.appendChild(valSent);
+          infoCard.appendChild(rowSent);
+
+          const rowFollow = document.createElement('div');
+          rowFollow.className = 'info-row';
+          const lblFollow = document.createElement('span');
+          lblFollow.className = 'info-name';
+          lblFollow.textContent = 'Follow-up Status';
+          rowFollow.appendChild(lblFollow);
+          const valFollow = document.createElement('span');
+          valFollow.className = 'info-val';
           if (item.replied === 1) {
-            followVal.textContent = 'Replied';
+            valFollow.textContent = 'Replied (resolved)';
           } else if (item.follow_at <= now) {
-            followVal.textContent = 'Due now (' + item.followups + ' follow-up' + (item.followups === 1 ? '' : 's') + ' logged)';
-            followVal.className = 'followup-alert';
+            valFollow.textContent = '⚠️ Due now (' + item.followups + ' follow-up' + (item.followups === 1 ? '' : 's') + ' logged)';
+            valFollow.style.color = 'var(--amber)';
           } else {
-            followVal.textContent = 'Scheduled for ' + formatFullDate(item.follow_at) + ' (' + item.followups + ' logged)';
+            valFollow.textContent = 'Scheduled for ' + formatFullDate(item.follow_at) + ' (' + item.followups + ' logged)';
           }
-          followSection.appendChild(followVal);
-          details.appendChild(followSection);
+          rowFollow.appendChild(valFollow);
+          infoCard.appendChild(rowFollow);
 
+          details.appendChild(infoCard);
+
+          // 3. Tracked Link Card (if link configured)
+          if (item.link) {
+            const linkCard = document.createElement('div');
+            linkCard.className = 'info-card';
+
+            const linkTitle = document.createElement('div');
+            linkTitle.className = 'info-card-title';
+            linkTitle.textContent = 'Tracked Link Target';
+            linkCard.appendChild(linkTitle);
+
+            const linkBox = document.createElement('div');
+            linkBox.className = 'link-box';
+
+            const linkUrl = document.createElement('a');
+            linkUrl.className = 'link-url';
+            linkUrl.href = item.link;
+            linkUrl.target = '_blank';
+            linkUrl.rel = 'noopener noreferrer';
+            linkUrl.textContent = item.link;
+            linkBox.appendChild(linkUrl);
+
+            const btnCopyTrackedLink = document.createElement('button');
+            btnCopyTrackedLink.className = 'btn btn-sm';
+            btnCopyTrackedLink.textContent = 'Copy Tracked Link';
+            btnCopyTrackedLink.addEventListener('click', function (e) {
+              e.stopPropagation();
+              copyTrackedLink(item.id);
+            });
+            linkBox.appendChild(btnCopyTrackedLink);
+
+            linkCard.appendChild(linkBox);
+            details.appendChild(linkCard);
+          }
+
+          // 4. Hit Activity Timeline
           if (hits.length > 0) {
+            const timelineTitle = document.createElement('div');
+            timelineTitle.className = 'info-card-title';
+            timelineTitle.style.marginTop = '14px';
+            timelineTitle.textContent = 'Detailed Hit Activity (' + hits.length + ' total)';
+            details.appendChild(timelineTitle);
+
             const timeline = document.createElement('div');
             timeline.className = 'timeline';
+
             hits.forEach(function (h) {
               const itemDiv = document.createElement('div');
-              itemDiv.className = 'timeline-item';
+              itemDiv.className = 'timeline-item kind-' + h.kind;
+
+              const headerDiv = document.createElement('div');
+              headerDiv.className = 'timeline-header';
+
+              const badge = document.createElement('span');
+              badge.className = 'badge-pill ' + (h.kind === 'confirmed' ? 'pill-confirmed' : (h.kind === 'likely' ? 'pill-likely' : 'pill-auto'));
+              badge.textContent = h.kind === 'confirmed' ? 'Confirmed Click' : (h.kind === 'likely' ? 'Likely Open' : 'Scanner / Auto');
+              headerDiv.appendChild(badge);
+
+              const whySpan = document.createElement('span');
+              whySpan.className = 'timeline-why';
+              whySpan.textContent = h.why;
+              headerDiv.appendChild(whySpan);
 
               const timeSpan = document.createElement('span');
               timeSpan.className = 'timeline-time';
-              timeSpan.textContent = formatFullDate(h.at);
-              itemDiv.appendChild(timeSpan);
+              timeSpan.textContent = '• ' + formatFullDate(h.at) + ' (' + formatTimeAgo(h.at) + ')';
+              headerDiv.appendChild(timeSpan);
 
-              const whySpan = document.createElement('span');
-              whySpan.textContent = h.why;
-              itemDiv.appendChild(whySpan);
-
-              const badge = document.createElement('span');
-              badge.className = 'timeline-badge badge-' + h.kind;
-              badge.textContent = h.kind === 'auto' ? 'detected' : (h.kind === 'likely' ? 'likely' : 'confirmed');
-              itemDiv.appendChild(badge);
-
+              itemDiv.appendChild(headerDiv);
               timeline.appendChild(itemDiv);
             });
+
             details.appendChild(timeline);
           }
 
+          // 5. Action Buttons
           const actions = document.createElement('div');
           actions.className = 'row-actions';
 
@@ -809,23 +1176,29 @@
           btnReplied.addEventListener('click', function (e) {
             e.stopPropagation();
             fetch('/api/emails/' + item.id + '/replied', { method: 'POST' })
-              .then(function () { loadEmails(); });
+              .then(function () {
+                showToast(item.replied === 1 ? 'Marked as unreplied' : 'Marked as replied');
+                loadEmails();
+              });
           });
           actions.appendChild(btnReplied);
 
           const btnFollow = document.createElement('button');
           btnFollow.className = 'btn btn-sm';
-          btnFollow.textContent = 'I followed up';
+          btnFollow.textContent = 'I followed up (+3d)';
           btnFollow.addEventListener('click', function (e) {
             e.stopPropagation();
             fetch('/api/emails/' + item.id + '/followup', { method: 'POST' })
-              .then(function () { loadEmails(); });
+              .then(function () {
+                showToast('Follow-up logged (+3 days)');
+                loadEmails();
+              });
           });
           actions.appendChild(btnFollow);
 
           const btnRowCopyPixel = document.createElement('button');
           btnRowCopyPixel.className = 'btn btn-sm';
-          btnRowCopyPixel.textContent = 'Copy pixel';
+          btnRowCopyPixel.textContent = 'Copy pixel snippet';
           btnRowCopyPixel.addEventListener('click', function (e) {
             e.stopPropagation();
             copyPixel(item.id);
@@ -848,9 +1221,12 @@
           btnDelete.textContent = 'Delete';
           btnDelete.addEventListener('click', function (e) {
             e.stopPropagation();
-            if (confirm('Delete this tracker and all hits?')) {
+            if (confirm('Delete tracker for ' + item.recipient + ' and all recorded hits?')) {
               fetch('/api/emails/' + item.id + '/delete', { method: 'POST' })
-                .then(function () { loadEmails(); });
+                .then(function () {
+                  showToast('Tracker deleted');
+                  loadEmails();
+                });
             }
           });
           actions.appendChild(btnDelete);
@@ -866,7 +1242,7 @@
         });
       }
 
-      function loadEmails() {
+      function loadEmails(callback) {
         fetch('/api/emails')
           .then(function (res) {
             if (res.status === 401) {
@@ -880,8 +1256,11 @@
               emailsData = data;
               renderList();
             }
+            if (typeof callback === 'function') callback();
           })
-          .catch(function () {});
+          .catch(function () {
+            if (typeof callback === 'function') callback();
+          });
       }
 
       function startPolling() {
@@ -905,4 +1284,3 @@
   </script>
 </body>
 </html>
-
